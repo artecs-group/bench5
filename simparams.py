@@ -25,7 +25,7 @@ hwp_config = {
 
 # MEMORY TECHNOLOGIES
 # -------------------
-# Tuple: (L1D, L1I, L2, L3)
+# Tuple: (L1I, L1D, L2, L3)
 
 mem_technologies = {
     "default": {

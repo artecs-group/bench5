@@ -107,28 +107,28 @@ class Simulation(object):
         l3p = simparams.hwp_config.get(args.l3_hwp, "")
         self._flags.append("hwp-override")
         self._flags.append("caches")
-        if l1dp:
-            add_if_valid(self._params, "l1d-hwp-type", l1dp[0])
-            add_if_valid(self._params, "l1d-hwp-deg",  l1dp[1])
-            add_if_valid(self._params, "l1d-hwp-lat",  l1dp[2])
-            add_if_valid(self._params, "l1d-hwp-qs",   l1dp[3])
-        self._params["l1d-data-lat"]  = cache[hier[0]][case][0][0]
-        self._params["l1d-write-lat"] = cache[hier[0]][case][0][1]
-        self._params["l1d-tag-lat"]   = cache[hier[0]][case][0][2]
-        self._params["l1d-resp-lat"]  = cache[hier[0]][case][0][3]
-        self._params["l1d_size"]      = cache[hier[0]][case][0][4]
-        self._params["l1d_assoc"]     = cache[hier[0]][case][0][5]
         if l1ip:
             add_if_valid(self._params, "l1i-hwp-type", l1ip[0])
             add_if_valid(self._params, "l1i-hwp-deg",  l1ip[1])
             add_if_valid(self._params, "l1i-hwp-lat",  l1ip[2])
             add_if_valid(self._params, "l1i-hwp-qs",   l1ip[3])
-        self._params["l1i-data-lat"]  = cache[hier[1]][case][1][0]
-        self._params["l1i-write-lat"] = cache[hier[1]][case][1][1]
-        self._params["l1i-tag-lat"]   = cache[hier[1]][case][1][2]
-        self._params["l1i-resp-lat"]  = cache[hier[1]][case][1][3]
-        self._params["l1i_size"]      = cache[hier[1]][case][1][4]
-        self._params["l1i_assoc"]     = cache[hier[1]][case][1][5]
+        self._params["l1i-data-lat"]  = cache[hier[0]][case][0][0]
+        self._params["l1i-write-lat"] = cache[hier[0]][case][0][1]
+        self._params["l1i-tag-lat"]   = cache[hier[0]][case][0][2]
+        self._params["l1i-resp-lat"]  = cache[hier[0]][case][0][3]
+        self._params["l1i_size"]      = cache[hier[0]][case][0][4]
+        self._params["l1i_assoc"]     = cache[hier[0]][case][0][5]
+        if l1dp:
+            add_if_valid(self._params, "l1d-hwp-type", l1dp[0])
+            add_if_valid(self._params, "l1d-hwp-deg",  l1dp[1])
+            add_if_valid(self._params, "l1d-hwp-lat",  l1dp[2])
+            add_if_valid(self._params, "l1d-hwp-qs",   l1dp[3])
+        self._params["l1d-data-lat"]  = cache[hier[1]][case][1][0]
+        self._params["l1d-write-lat"] = cache[hier[1]][case][1][1]
+        self._params["l1d-tag-lat"]   = cache[hier[1]][case][1][2]
+        self._params["l1d-resp-lat"]  = cache[hier[1]][case][1][3]
+        self._params["l1d_size"]      = cache[hier[1]][case][1][4]
+        self._params["l1d_assoc"]     = cache[hier[1]][case][1][5]
         self._flags.append("l2cache")
         if args.l2_banks:
             self._flags.append("l2-enable-banks")

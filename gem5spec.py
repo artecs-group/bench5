@@ -396,6 +396,8 @@ def execute(spawn_list, args, sem, limit_time=False):
             thread = threading.Thread(target=run_in_thread, args=(s,))
             thread_list.append(thread)
             thread.start()
+            # Rate limiting
+            time.sleep(1)
         # Wait for all threads to terminate
         for t in thread_list:
             t.join()

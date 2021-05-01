@@ -791,6 +791,8 @@ def main():
     parser.add_argument("--cpts", action="store", type=int, metavar="N",
         default=0, help="execute N checkpoints only, in order of weight " +
         "(default: 0 = all)")
+    parser.add_argument("--repl-mem", action="store", type=str, metavar="SIZE",
+        help="memory size in trace replay mode (override)")
     parser.add_argument("--sss", action="store_true",
         help="use a single subset for each benchmark (the first one)")
     parser.add_argument("--mp", action="store_true",

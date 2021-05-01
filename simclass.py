@@ -598,7 +598,8 @@ class TraceReplay(Simulation):
             raise Exception("The environment has already been prepared")
         if not self._workloads:
             # Single workload
-            self._params["mem-size"] = b_params[2]
+            self._params["mem-size"] = \
+                (args.repl_mem if args.repl_mem else b_params[2])
             self._params["num-cpus"] = 1
             # Set workload-related variables and paths
             self._wl_id    = b_name.split(".")[0]
@@ -609,7 +610,8 @@ class TraceReplay(Simulation):
             self._data_path = os.path.join(args.data_dir, args.arch, b_name,
                 self._prereq_dir, subset[0], self._det_conf[0][0])
         else:
-            if bytes(b_params[2]) > bytes(self._params["mem-size"]):
+            if not args.repl_mem and \
+               bytes(b_params[2]) > bytes(self._params["mem-size"]):
                 self._params["mem-size"] = b_params[2]
             self._params["num-cpus"] += 1
             # Set workload-related variables and paths

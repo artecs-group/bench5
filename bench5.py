@@ -62,7 +62,7 @@ shutdown = False
 
 # Simple log printing function
 def log(string):
-    print("[gem5spec] %s" % string)
+    print("[bench5] %s" % string)
     return
 
 
@@ -708,7 +708,7 @@ def main():
         log("error: unable to load parameters from benchlist.py")
         sys.exit(1)
 
-    parser = argparse.ArgumentParser(description="Helper for SPEC simulation")
+    parser = argparse.ArgumentParser(description="Helper for benchmarks simulation with gem5")
     parser.add_argument("set", nargs=1, type=str,
         choices=["test","train","ref"], help="simulation set")
     parser.add_argument("benchmarks", nargs="+", type=str,
@@ -812,7 +812,7 @@ def main():
     parser.add_argument("--no-wd", action="store_true",
         help="disable watchdog")
     args = parser.parse_args()
-    log("welcome to gem5spec!")
+    log("welcome to bench5!")
     notes = False
     if args.ctrace or args.atrace:
         log("note: --ctrace/--atrace implies --debug")

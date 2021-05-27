@@ -8,8 +8,7 @@ __email__  = "tommarin@ucm.es"
 benchsuite = "spec2017"
 
 import argparse
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 import io
 import os
 import platform
@@ -18,6 +17,7 @@ import shutil
 import sys
 import time
 import threading
+import uuid
 
 python_version = float(".".join(map(str, sys.version_info[:2])))
 if python_version < 3.2:
@@ -40,6 +40,8 @@ except ImportError as e:
     log("error: %s" % e)
     exit(1)
 
+short_uuid  = str(uuid.uuid4())[-6:]
+script_path = os.path.dirname(os.path.realpath(sys.argv[0]))
 uppath = lambda _path, n: os.sep.join(_path.split(os.sep)[:-n])
 
 # List of warnings due to missing resources
@@ -77,6 +79,12 @@ def cmd_exists(cmd):
 # Check for the presence of specific tools or paths in the system
 def check_prerequisites(args, valgrind, simpoint, gem5):
     exe_path = ""
+
+    if args.sge:
+        sge_template = os.path.join(script_path, "sge.tpl")
+        if not os.path.isfile(sge_template):
+            log("error: Unable to find sge template in script directory")
+            exit(2)
 
     if valgrind:
         # Check if valgrind exists in current system
@@ -248,6 +256,41 @@ def watchdog(limit_time):
                     fail(pid, "timeout")
                     os.kill(pid, 9)
     return
+
+
+# Generate SGE job scripts from spawn list
+def gen_sge_job(spawn_list, args):
+    global count_pids
+
+    sge_template = os.path.join(script_path, "sge.tpl")
+    jobs_dir = os.path.join(args.out_dir, "jobs")
+    if not os.path.isdir(jobs_dir):
+        os.mkdir(jobs_dir)
+    # Read the template file
+    with open(sge_template, "r") as tpl:
+        unparsed = tpl.read()
+    log("generating sge job scripts")
+    for s in spawn_list:
+        job = unparsed
+        split_cmd, in_name, tmp_dir, log_filepath = s
+        # Reconstruct command string
+        cmd = ""
+        for param in split_cmd:
+            if ' ' in param:
+                cmd += "\'%s\' " % param
+            else:
+                cmd += "%s " % param
+        job_id = "%s%04d" % (short_uuid, count_pids)
+        # Replace placeholders with real parameters
+        job = job.replace("[EXEDIR]", tmp_dir)
+        job = job.replace("[JOBNAME]", job_id)
+        job = job.replace("[LOGPATH]", log_filepath)
+        job = job.replace("[COMMAND]", cmd)
+        # Write the job file
+        with open(os.path.join(jobs_dir, "%s.sh" % job_id), "w") as out:
+            out.write(job)
+        # Increment the counter (no new process is spawned for real)
+        count_pids += 1
 
 
 # Spawn all the programs in the spawn list and control the execution
@@ -679,7 +722,10 @@ def simulate(mode, args, sem):
         warnings = []
 
     if spawn_list:
-        execute(spawn_list, args, sem, mode == "cpt_sim")
+        if args.sge:
+            gen_sge_job(spawn_list, args)
+        else:
+            execute(spawn_list, args, sem, mode == "cpt_sim")
     else:
         log("nothing to execute")
         return False
@@ -811,6 +857,8 @@ def main():
         help="rename output files with an unique configuration id")
     parser.add_argument("--no-wd", action="store_true",
         help="disable watchdog")
+    parser.add_argument("--sge", action="store_true",
+        help="generate sge job scripts instead of executing")
     args = parser.parse_args()
     log("welcome to bench5!")
     notes = False

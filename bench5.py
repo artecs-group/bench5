@@ -40,7 +40,11 @@ except ImportError as e:
     log("error: %s" % e)
     exit(1)
 
-short_uuid  = str(uuid.uuid4())[-6:]
+valid_short_uuid = False
+while not valid_short_uuid:
+    short_uuid = str(uuid.uuid4())[-6:]
+    if short_uuid[0].isalpha():
+        valid_short_uuid = True
 script_path = os.path.dirname(os.path.realpath(sys.argv[0]))
 uppath = lambda _path, n: os.sep.join(_path.split(os.sep)[:-n])
 

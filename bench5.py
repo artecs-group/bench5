@@ -7,6 +7,11 @@ __email__  = "tommarin@ucm.es"
 # (allowed values: spec2006, spec2017)
 benchsuite = "spec2017"
 
+# Simple log printing function
+def log(string):
+    print("[bench5] %s" % string)
+    return
+
 import argparse
 from datetime import datetime, timedelta
 import io
@@ -64,12 +69,6 @@ sp_pids = []
 sp_fail = {}
 # Shutdown flag
 shutdown = False
-
-
-# Simple log printing function
-def log(string):
-    print("[bench5] %s" % string)
-    return
 
 
 # Check if an executable is present in the current PATH

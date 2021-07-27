@@ -389,22 +389,6 @@ def execute(spawn_list, args, sem, limit_time=False):
                             details[6].replace("-", "") + "_" +
                             ("cpt" + details[7].split('_')[1])
                              if "cpt" in out_path else "full")
-
-            if out_path != work_path:
-                wp_files = []
-                if args.atrace:
-                    wp_files.append(("access_trace.csv",
-                                      sim_conf_id + "_accesses.csv"))
-                if args.ctrace:
-                    wp_files.append(("conflict_trace.csv",
-                                      sim_conf_id + "_conflicts.csv"))
-                    wp_files.append(("avoided_trace.csv",
-                                      sim_conf_id + "_avoided.csv"))
-                for f in wp_files:
-                    if os.path.isfile(os.path.join(work_path, f[0])):
-                        f_dest = f[1] if args.rename else f[0]
-                        shutil.move(os.path.join(work_path, f[0]),
-                                    os.path.join(out_path, f_dest))
             if (args.rename and
                 os.path.isfile(os.path.join(out_path, "stats.txt"))):
                 shutil.move(os.path.join(out_path, "stats.txt"),
@@ -853,10 +837,6 @@ def main():
         help="use gem5 for bbv generation")
     parser.add_argument("--debug", action="store_true",
         help="use gem5.opt instead of gem5.fast")
-    parser.add_argument("--ctrace", action="store_true",
-        help="dump conflict trace (implies --debug)")
-    parser.add_argument("--atrace", action="store_true",
-        help="dump access trace (implies --debug)")
     parser.add_argument("--rename", action="store_true",
         help="rename output files with an unique configuration id")
     parser.add_argument("--no-wd", action="store_true",
@@ -866,10 +846,6 @@ def main():
     args = parser.parse_args()
     log("welcome to bench5!")
     notes = False
-    if args.ctrace or args.atrace:
-        log("note: --ctrace/--atrace implies --debug")
-        args.debug = True
-        notes = True
     if args.mp:
         log("note: parameter --mp implies --sss")
         args.sss = True

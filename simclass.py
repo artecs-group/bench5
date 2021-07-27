@@ -445,8 +445,6 @@ class CptSimulation(Simulation):
         self._detailed = True
         self._target_dir = "simulation"
         self._prereq_dir = "checkpoint"
-        cond_append(self._debug_flags, args.atrace, "AccessTrace")
-        cond_append(self._debug_flags, args.ctrace, "ConflictTrace")
         return
 
     def prepareEnvironment(self, benchsuite, args):
@@ -494,8 +492,6 @@ class FullSimulation(Simulation):
         self._detailed = True
         self._target_dir   = "simulation"
         self._trailing_dir = "full"
-        cond_append(self._debug_flags, args.atrace, "AccessTrace")
-        cond_append(self._debug_flags, args.ctrace, "ConflictTrace")
         return
 
 
@@ -579,8 +575,6 @@ class TraceReplay(Simulation):
         self._target_dir   = "simulation"
         self._trailing_dir = "trace_replay"
         self._prereq_dir   = "trace"
-        cond_append(self._debug_flags, args.atrace, "AccessTrace")
-        cond_append(self._debug_flags, args.ctrace, "ConflictTrace")
         return
 
     def setDetailedParams(self, model, tech, case, args):

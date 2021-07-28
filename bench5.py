@@ -71,6 +71,17 @@ sp_fail = {}
 shutdown = False
 
 
+# Reconstruct string from split command
+def cmd_join(split_cmd):
+    cmd = ""
+    for param in split_cmd:
+        if ' ' in param:
+            cmd += "\'%s\' " % param
+        else:
+            cmd += "%s " % param
+    return cmd
+
+
 # Check if an executable is present in the current PATH
 def cmd_exists(cmd):
     return any(
@@ -277,12 +288,7 @@ def gen_sge_job(spawn_list, args):
         job = unparsed
         split_cmd, in_name, tmp_dir, log_filepath = s
         # Reconstruct command string
-        cmd = ""
-        for param in split_cmd:
-            if ' ' in param:
-                cmd += "\'%s\' " % param
-            else:
-                cmd += "%s " % param
+        cmd = cmd_join(split_cmd)
         job_id = "%s%04d" % (short_uuid, count_pids)
         # Replace placeholders with real parameters
         job = job.replace("[EXEDIR]", tmp_dir)
@@ -696,7 +702,8 @@ def simulate(mode, args, sem):
     gem5 = (mode != "sp_gen" and (mode != "bbv_gen" or args.use_gem5))
     exe_path = check_prerequisites(args, valgrind, simpoint, gem5)
 
-    log("preparing the environment, please wait")
+    if not args.dry:
+        log("preparing the environment, please wait")
     if sim_class(args).isDetailed():
         spawn_list = detailed_sim(sim_class, exe_path, mode, args)
     else:
@@ -708,16 +715,20 @@ def simulate(mode, args, sem):
         # Clear the warnings after printing them
         warnings = []
 
+    summary = False
     if spawn_list:
-        if args.sge:
+        if args.dry:
+            for s in spawn_list:
+                print(">\t%s" % cmd_join(s[0]))
+        elif args.sge:
             gen_sge_job(spawn_list, args)
         else:
             execute(spawn_list, args, sem, mode == "cpt_sim")
+            summary = True
     else:
         log("nothing to execute")
-        return False
 
-    return True
+    return summary
 
 
 # Main function
@@ -826,6 +837,8 @@ def main():
         "(default: 0 = all)")
     parser.add_argument("--repl-mem", action="store", type=str, metavar="SIZE",
         help="memory size in trace replay mode (override)")
+    parser.add_argument("--dry", action="store_true",
+        help="dry run: only print commands without executing")
     parser.add_argument("--sss", action="store_true",
         help="use a single subset for each benchmark (the first one)")
     parser.add_argument("--mp", action="store_true",

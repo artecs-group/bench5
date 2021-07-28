@@ -237,6 +237,9 @@ class Simulation(object):
         if not self._workloads:
             raise Exception("No workload has been set")
         tmp_path = os.path.join(out_path, "tmp")
+        # Do not prepare the folder if it is a dry run
+        if args.dry:
+            return tmp_path
         # Remove the temporary folder if it already exists
         if os.path.isdir(tmp_path):
             shutil.rmtree(tmp_path)

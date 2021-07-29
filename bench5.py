@@ -57,8 +57,8 @@ uppath = lambda _path, n: os.sep.join(_path.split(os.sep)[:-n])
 warnings = []
 # Total number of spawned processes
 count_pids = 0
-# Total number of failed processes
-count_fail = 0
+# Total number of terminated processes (succeeded and failed)
+count_term = 0
 # Lock for processes list/counter update
 lock_pids = threading.Lock()
 # Lock for failed processes dict/counter update
@@ -69,6 +69,23 @@ sp_pids = []
 sp_fail = {}
 # Shutdown flag
 shutdown = False
+
+
+# Print a simple progress bar
+# Original source: https://stackoverflow.com/a/45868571
+def progress_bar(total, progress, prefix = ""):
+    if prefix:
+        prefix += " "
+    bar_length, status = 40, ""
+    progress = float(progress) / float(total)
+    if progress >= 1.:
+        progress, status = 1, "\r\n"
+    block = int(round(bar_length * progress))
+    text = "\r{}[{}] {:.0f}% {}".format(prefix,
+        "#" * block + "-" * (bar_length - block), round(progress * 100, 0),
+        status)
+    sys.stdout.write(text)
+    sys.stdout.flush()
 
 
 # Reconstruct string from split command
@@ -221,15 +238,12 @@ def get_rss(pid):
     return 0
 
 
-# Add a process to the failed list and update the counter
+# Add a process to the failed list
 def fail(pid, cause):
-    global count_fail
     global sp_fail
 
     with lock_fail:
-        count_fail += 1
         sp_fail[pid] = cause
-        log("pid " + str(pid) + " failed (code: " + cause + ")")
     return
 
 
@@ -312,7 +326,7 @@ def execute(spawn_list, args, sem, limit_time=False):
     # ANY of them terminates, regardless of which one does)
     def run_in_thread(s):
         global count_pids
-        global count_fail
+        global count_term
         global sp_pids
         global sp_fail
 
@@ -410,13 +424,12 @@ def execute(spawn_list, args, sem, limit_time=False):
                 if os.path.exists(dest_path):
                     shutil.rmtree(dest_path)
                 os.rename(out_path, dest_path)
-                # Clear the entry in the fail dict
-                with lock_fail:
-                    del sp_fail[pid]
 
         # Remove the process from the running list
         with lock_pids:
             sp_pids.remove(pid)
+            count_term += 1
+            progress_bar(len(spawn_list), count_term, "[bench5]")
 
         # Release the semaphore (makes space for other processes)
         sem.release()
@@ -440,12 +453,14 @@ def execute(spawn_list, args, sem, limit_time=False):
         return
 
     # Main thread
+    instances = len(spawn_list)
     log("executing %d %s (%d at a time), please wait" % (
-        len(spawn_list), "instance" if len(spawn_list) == 1 else "instances",
-        min(args.max_proc, len(spawn_list))))
+        len(spawn_list), "instance" if instances == 1 else "instances",
+        min(args.max_proc, instances)))
     # Create and start the spawn thread
     spawn_thread = threading.Thread(target=spawn_in_thread)
     spawn_thread.start()
+    progress_bar(instances, 0, "[bench5]")
 
     try:
         # Periodically check resources utilization
@@ -735,7 +750,8 @@ def simulate(mode, args, sem):
 def main():
     global benchsuite
     global count_pids
-    global count_fail
+    global count_term
+    global sp_fail
 
     home = os.path.expanduser("~")
     bsyear = ''.join(c for c in benchsuite if c.isdigit())
@@ -908,6 +924,12 @@ def main():
         if ops[i][1]:
             ret = simulate(ops[i][0], args, sem)
 
+            # Print failed processes and clear the list
+            count_fail = len(sp_fail)
+            for pid in sp_fail:
+                log("pid " + str(pid) + " failed (code: " + sp_fail[pid] + ")")
+            sp_fail.clear()
+
             if ret:
                 # Print some statistics
                 log("operation complete")
@@ -918,7 +940,7 @@ def main():
                         (1 - float(count_fail) / count_pids) * 100))
             # Reset the counters for next phase
             count_pids = 0
-            count_fail = 0
+            count_term = 0
 
             # Next operation must fetch data from generated output
             args.data_dir = args.out_dir

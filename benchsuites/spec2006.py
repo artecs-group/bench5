@@ -32,6 +32,9 @@ benchmarks = (
     "999.specrand"
 )
 
+bench_groups = {
+    "all"               : benchmarks
+}
 
 exe_name = {
     "482.sphinx3"       : "sphinx_livepretend",

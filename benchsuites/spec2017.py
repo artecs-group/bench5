@@ -50,6 +50,8 @@ benchmarks = (
 )
 
 bench_groups = {
+    "all_rate"          : (b for b in benchmarks if b[0] == '5'),
+    "all_speed"         : (b for b in benchmarks if b[0] == '6'),
     "exp17"             : ("602", "605", "607", "623", "625", "628", "638", "641", "649", "654")
 }
 

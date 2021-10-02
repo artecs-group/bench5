@@ -681,6 +681,7 @@ def simple_sim(sim_class, exe, mode, args):
                 log_filepath = os.path.join(out_dir, "log_%s" % subset[0])
                 # Execute the simpoint utility
                 cmd = (exe +
+                   (" -inputVectorsGzipped" if args.use_gem5 else "") +
                     " -loadFVFile " + bbv_filepath +
                     " -maxK " + str(args.maxk) +
                     " -saveSimpoints " + sp_filepath +
@@ -862,7 +863,7 @@ def main():
     parser.add_argument("--keep-tmp", action="store_true",
         help="do not remove temporary folders after the execution")
     parser.add_argument("--use-gem5", action="store_true",
-        help="use gem5 for bbv generation")
+        help="use gem5 for bbv generation and gz format for simpoint")
     parser.add_argument("--debug", action="store_true",
         help="use gem5.opt instead of gem5.fast")
     parser.add_argument("--rename", action="store_true",

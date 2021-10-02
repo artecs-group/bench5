@@ -3,6 +3,7 @@
 __author__ = "Tommaso Marinelli"
 __email__  = "tommarin@ucm.es"
 
+import gzip
 import errno
 import os
 import shutil
@@ -387,15 +388,23 @@ class SPGeneration(DummySimulation):
             raise Exception("No workload has been set")
         assert os.path.isdir(self._data_path), "missing folder %s" % (
             self._data_path)
-        b_spl = self._workloads[0][0].split('.')
-        b_abbr = b_spl[0] + b_spl[1]
-        bbv_filename = "bb.out." + b_abbr + "." + self._workloads[0][2]
+        if not args.use_gem5:
+            b_spl = self._workloads[0][0].split('.')
+            b_abbr = b_spl[0] + b_spl[1]
+            bbv_filename = "bb.out." + b_abbr + "." + self._workloads[0][2]
+        else:
+            bbv_filename = "simpoint.bb.gz"
         bbv_filepath = os.path.join(self._data_path, bbv_filename)
         assert os.path.isfile(bbv_filepath), "missing file %s" % bbv_filepath
         # Check if the BBVs file contains any interval
-        rgx = subprocess.check_output("sed '/^[[:blank:]]*#/d;s/#.*//' " +
-            bbv_filepath + " | wc -w", shell=True)
-        result = int(rgx)
+        if not args.use_gem5:
+            rgx = subprocess.check_output("sed '/^[[:blank:]]*#/d;s/#.*//' " +
+                bbv_filepath + " | wc -w", shell=True)
+            result = int(rgx)
+        else:
+            with gzip.open(bbv_filepath, 'rb') as f:
+                data = f.read(1)
+            result = len(data)
         assert result != 0, "%s does not contain any interval" % bbv_filename
         tmp_path, log_path = super(
             SPGeneration, self).prepareEnvironment(benchsuite, args)

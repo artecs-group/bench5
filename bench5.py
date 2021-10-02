@@ -71,6 +71,11 @@ sp_fail = {}
 shutdown = False
 
 
+# Path type (with tilde expansion)
+def path(s):
+    return os.path.expanduser(s)
+
+
 # Print a simple progress bar
 # Original source: https://stackoverflow.com/a/45868571
 def progress_bar(total, progress, prefix = ""):
@@ -833,22 +838,23 @@ def main():
         default=int(os.sysconf('SC_NPROCESSORS_ONLN')),
         help="number of processes that can run concurrently " +
         "(default: %(default)s)")
-    parser.add_argument("--sp-dir", action="store", type=str, metavar="DIR",
-        default=(home + "/simpoint"), help="path to simpoint utility " +
-        "(default: %(default)s)")
-    parser.add_argument("--gem5-dir", action="store", type=str, metavar="DIR",
-        default=(home + "/gem5-artecs"), help="path to gem5 simulator " +
-        "(default: %(default)s)")
-    parser.add_argument("--spec-dir", action="store", type=str, metavar="DIR",
-        default=(home + "/cpu" + bsyear + "/benchspec/CPU" + (bsyear if
-        benchsuite != "spec2017" else "")),
-        help="path to SPEC benchmark suite (default: %(default)s)")
-    parser.add_argument("--data-dir", action="store", type=str, metavar="DIR",
-        default=(home + "/benchmark-data/SPECCPU/speccpu" + bsyear),
-        help="path to benchmark simulation data (default: %(default)s)")
-    parser.add_argument("--out-dir", action="store", type=str, metavar="DIR",
-        default=(home + "/out_" + benchsuite), help="output directory " +
-        "(default: %(default)s)")
+    parser.add_argument("--sp-dir", action="store", type=path, metavar="DIR",
+        default=os.path.join(home, "simpoint"), help="path of the simpoint " +
+        "utility folder (default: %(default)s)")
+    parser.add_argument("--gem5-dir", action="store", type=path, metavar="DIR",
+        default=os.path.join(home, "gem5-artecs"), help="path of the gem5 " +
+        "simulator folder (default: %(default)s)")
+    parser.add_argument("--spec-dir", action="store", type=path, metavar="DIR",
+        default=os.path.join(home, "cpu" + bsyear, "benchspec", "CPU" +
+                             (bsyear if benchsuite != "spec2017" else "")),
+        help="path of the SPEC benchmark suite folder (default: %(default)s)")
+    parser.add_argument("--data-dir", action="store", type=path, metavar="DIR",
+        default=os.path.join(home, "benchmark-data", "SPECCPU", "speccpu" +
+                             bsyear),
+        help="path of the simulation data folder (default: %(default)s)")
+    parser.add_argument("--out-dir", action="store", type=path, metavar="DIR",
+        default=os.path.join(home, "out_" + benchsuite), help="path of the " +
+        "output folder (default: %(default)s)")
     parser.add_argument("--cpts", action="store", type=int, metavar="N",
         default=0, help="execute N checkpoints only, in order of weight " +
         "(default: 0 = all)")
@@ -873,6 +879,7 @@ def main():
     parser.add_argument("--sge", action="store_true",
         help="generate sge job scripts instead of executing")
     args = parser.parse_args()
+
     log("welcome to bench5!")
     notes = False
     if args.mp:

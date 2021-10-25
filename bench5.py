@@ -3,15 +3,6 @@
 __author__ = "Tommaso Marinelli"
 __email__  = "tommarin@ucm.es"
 
-# Select the benchmark suite to use
-# (allowed values: spec2006, spec2017)
-benchsuite = "spec2017"
-
-# Simple log printing function
-def log(string):
-    print("[bench5] %s" % string)
-    return
-
 import argparse
 from datetime import datetime, timedelta
 import io
@@ -34,16 +25,6 @@ else:
 from simclass import BBVGeneration, SPGeneration, CptGeneration, \
     CptSimulation, TraceGeneration, TraceReplay, FullSimulation, MemProfile
 import simparams
-try:
-    if benchsuite == "spec2006":
-        import benchsuites.spec2006 as benchlist
-    elif benchsuite == "spec2017":
-        import benchsuites.spec2017 as benchlist
-    else:
-        raise ImportError("invalid benchmark suite: %s" % benchsuite)
-except ImportError as e:
-    log("error: %s" % e)
-    exit(1)
 
 valid_short_uuid = False
 while not valid_short_uuid:
@@ -69,6 +50,12 @@ sp_pids = []
 sp_fail = {}
 # Shutdown flag
 shutdown = False
+
+
+# Simple log printing function
+def log(string):
+    print("[bench5] %s" % string)
+    return
 
 
 # Path type (with tilde expansion)
@@ -754,27 +741,19 @@ def simulate(mode, args, sem):
 
 # Main function
 def main():
+    global benchlist
     global benchsuite
     global count_pids
     global count_term
     global sp_fail
 
+    # Default benchmark suite
+    def_bs = "spec2017"
+    def_yr = ''.join(c for c in def_bs if c.isdigit())
     home = os.path.expanduser("~")
-    bsyear = ''.join(c for c in benchsuite if c.isdigit())
 
-    try:
-        benchlist.benchmarks
-        benchlist.exe_name
-        benchlist.preprocessing
-        benchlist.mem_size
-        benchlist.subset
-        benchlist.params
-        benchlist.input
-    except (NameError, AttributeError):
-        log("error: unable to load parameters from benchlist.py")
-        sys.exit(1)
-
-    parser = argparse.ArgumentParser(description="Helper for benchmarks simulation with gem5")
+    parser = argparse.ArgumentParser(description="Helper for benchmarks " +
+                                                 "simulation with gem5")
     parser.add_argument("set", nargs=1, type=str,
         choices=["test","train","ref"], help="simulation set")
     parser.add_argument("benchmarks", nargs="+", type=str,
@@ -795,6 +774,9 @@ def main():
         help="simulate target benchmarks normally")
     parser.add_argument("-p", "--profile", action="store_true",
         help="profile benchmarks memory utilization")
+    parser.add_argument("--benchsuite", action="store", type=str,
+        default=def_bs, choices=["spec2006","spec2017"],
+        help="benchmark suite (default: %(default)s)")
     parser.add_argument("--arch", action="store", type=str, default="aarch64",
         choices=["aarch64","armhf","x86-64"], help="cpu architecture " +
         "(default: %(default)s)")
@@ -845,16 +827,16 @@ def main():
         default=os.path.join(home, "gem5-artecs"), help="path of the gem5 " +
         "simulator folder (default: %(default)s)")
     parser.add_argument("--spec-dir", action="store", type=path, metavar="DIR",
-        default=os.path.join(home, "cpu" + bsyear, "benchspec", "CPU" +
-                             (bsyear if benchsuite != "spec2017" else "")),
-        help="path of the SPEC benchmark suite folder (default: %(default)s)")
+        help="path of the SPEC benchmark suite folder (default: " +
+        os.path.join(home, "cpu" + def_yr, "benchspec", "CPU" +
+        (def_yr if def_bs != "spec2017" else "")) + ")")
     parser.add_argument("--data-dir", action="store", type=path, metavar="DIR",
-        default=os.path.join(home, "benchmark-data", "SPECCPU", "speccpu" +
-                             bsyear),
-        help="path of the simulation data folder (default: %(default)s)")
+        help="path of the simulation data folder (default: " +
+        os.path.join(home, "benchmark-data", "SPECCPU", "speccpu" + def_yr) +
+        ")")
     parser.add_argument("--out-dir", action="store", type=path, metavar="DIR",
-        default=os.path.join(home, "out_" + benchsuite), help="path of the " +
-        "output folder (default: %(default)s)")
+        help="path of the output folder (default: " +
+        os.path.join(home, "out_" + def_bs) + ")")
     parser.add_argument("--cpts", action="store", type=int, metavar="N",
         default=0, help="execute N checkpoints only, in order of weight " +
         "(default: 0 = all)")
@@ -879,6 +861,32 @@ def main():
     parser.add_argument("--sge", action="store_true",
         help="generate sge job scripts instead of executing")
     args = parser.parse_args()
+
+    # Set default paths according to selected benchmark suite
+    benchsuite = args.benchsuite
+    year = ''.join(c for c in benchsuite if c.isdigit())
+    if args.spec_dir is None:
+        args.spec_dir = os.path.join(home, "cpu" + year, "benchspec",
+            "CPU" + (year if benchsuite != "spec2017" else ""))
+    if args.data_dir is None:
+        args.data_dir = os.path.join(home, "benchmark-data", "SPECCPU",
+            "speccpu" + year)
+    if args.out_dir is None:
+        args.out_dir = os.path.join(home, "out_" + benchsuite)
+
+    # Import the selected benchmark suite module globally
+    try:
+        if benchsuite == "spec2006":
+            __import__("benchsuites.spec2006")
+            benchlist = sys.modules["benchsuites.spec2006"]
+        elif benchsuite == "spec2017":
+            __import__("benchsuites.spec2017")
+            benchlist = sys.modules["benchsuites.spec2017"]
+        else:
+            raise ImportError("invalid benchmark suite: %s" % benchsuite)
+    except ImportError as e:
+        log("error: %s" % e)
+        exit(1)
 
     log("welcome to bench5!")
     notes = False

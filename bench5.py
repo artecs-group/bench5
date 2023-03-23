@@ -568,6 +568,7 @@ def detailed_sim(sim_class, exe, mode, args):
             sim_mp.setSimPath(exe)
             sim_mp.setDetailedParams(model, tech, case, args)
 
+        any_wl = False
         for b_name in args.benchmarks:
             b_set = args.set[0]
 
@@ -596,14 +597,15 @@ def detailed_sim(sim_class, exe, mode, args):
                     # Use the same instance for all the benchmarks
                     sim = sim_mp
                 sim.addWorkload(b_name, b_params, subset, args)
+                any_wl = True
                 if not args.mp:
                     b_spawn_list = detailed_list(sim, mode, args)
                     spawn_list.extend(b_spawn_list)
 
         """ If using multiprocessing, finalization happens after adding all the
             selected benchmarks as workloads """
-        if args.mp:
-            i_spawn_list = detailed_list(sim, mode, args)
+        if args.mp and any_wl:
+            i_spawn_list = detailed_list(sim_mp, mode, args)
             spawn_list.extend(i_spawn_list)
     return spawn_list
 

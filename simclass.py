@@ -6,6 +6,7 @@ __email__  = "tommarin@ucm.es"
 import gzip
 import errno
 import os
+import re
 import shutil
 import sys
 # Local modules
@@ -16,6 +17,16 @@ if python_version < 3.2:
     import subprocess32 as subprocess
 else:
     import subprocess
+
+# Convert human-readable size string to number
+# Original source: https://stackoverflow.com/a/60708339
+units = {"B": 1, "KB": 2**10, "MB": 2**20, "GB": 2**30, "TB": 2**40}
+def sizenum(size):
+    size = size.upper()
+    if not re.match(r' ', size):
+        size = re.sub(r'([KMGT]?B)', r' \1', size)
+    number, unit = [string.strip() for string in size.split()]
+    return int(float(number)*units[unit])
 
 # Ignore errors when a symlink is already present
 def force_symlink(orig, dest):
@@ -202,7 +213,7 @@ class Simulation(object):
                 self._target_dir, self._wl_ss)
         else:
             self._params["cmd"] += (";./%s" % b_params[0])
-            if bytes(b_params[2]) > bytes(self._params["mem-size"]):
+            if sizenum(b_params[2]) > sizenum(self._params["mem-size"]):
                 self._params["mem-size"] = b_params[2]
             self._params["options"] = ("%s;%s" % (self._params["options"],
                 subset[1]) if "options" in self._params
@@ -617,7 +628,7 @@ class TraceReplay(Simulation):
                 self._prereq_dir, subset[0], self._det_conf[0][0])
         else:
             if not args.repl_mem and \
-               bytes(b_params[2]) > bytes(self._params["mem-size"]):
+               sizenum(b_params[2]) > sizenum(self._params["mem-size"]):
                 self._params["mem-size"] = b_params[2]
             self._params["num-cpus"] += 1
             # Set workload-related variables and paths

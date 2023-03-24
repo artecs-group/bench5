@@ -390,21 +390,6 @@ def execute(spawn_list, args, sem, limit_time=False):
             # It is useless to keep the output folder in case of brutal exit
             shutil.rmtree(out_path)
         else:
-            # Move or rename relevant output files
-            details = out_path.split('/')[-8:]
-            sim_conf_id = (details[1].split('.')[0] + "_" +
-                            details[0] + "_" +
-                            details[3].replace("_", "") + "_" +
-                            details[4].replace("-", "") + "_" +
-                            details[5].replace("-", "") + "_" +
-                            details[6].replace("-", "") + "_" +
-                            ("cpt" + details[7].split('_')[1])
-                             if "cpt" in out_path else "full")
-            if (args.rename and
-                os.path.isfile(os.path.join(out_path, "stats.txt"))):
-                shutil.move(os.path.join(out_path, "stats.txt"),
-                            os.path.join(out_path, sim_conf_id + "_stats.txt"))
-
             # Delete the temporary directory
             if work_dir == "tmp" and not args.keep_tmp:
                 shutil.rmtree(work_path)
@@ -856,8 +841,6 @@ def main():
         help="use gem5 for bbv generation and gz format for simpoint")
     parser.add_argument("--debug", action="store_true",
         help="use gem5.opt instead of gem5.fast")
-    parser.add_argument("--rename", action="store_true",
-        help="rename output files with an unique configuration id")
     parser.add_argument("--no-wd", action="store_true",
         help="disable watchdog")
     parser.add_argument("--sge", action="store_true",

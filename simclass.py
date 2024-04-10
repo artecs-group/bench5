@@ -12,8 +12,8 @@ import sys
 # Local modules
 import simparams
 
-python_version = float(".".join(map(str, sys.version_info[:2])))
-if python_version < 3.2:
+python_version = sys.version_info[:2]
+if python_version < (3, 2):
     import subprocess32 as subprocess
 else:
     import subprocess
